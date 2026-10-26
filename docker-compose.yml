@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: forma
+      POSTGRES_PASSWORD: forma
+      POSTGRES_DB: forma
+    ports:
+      - "5432:5432"
+    volumes:
+      - forma-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  forma-postgres-data:

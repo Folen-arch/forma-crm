@@ -1,0 +1,62 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792955197506,
+      "tag": "0000_greedy_major_mapleleaf",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792955379328,
+      "tag": "0001_talented_turbo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792959674270,
+      "tag": "0002_premium_omega_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792960186555,
+      "tag": "0003_worried_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792960238753,
+      "tag": "0004_mighty_sandman",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792962628449,
+      "tag": "0005_heavy_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792993283154,
+      "tag": "0006_workable_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792993582738,
+      "tag": "0007_wet_scarlet_witch",
+      "breakpoints": true
+    }
+  ]
+}

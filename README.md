@@ -63,31 +63,6 @@
 
 Откройте [http://localhost:3000](http://localhost:3000).
 
-## Публикация на Netlify
-
-Проект настроен для сборки в Netlify через Next.js adapter. Перед подключением создайте облачную PostgreSQL-базу и загрузите проект в Git-репозиторий.
-
-Для текущей разработки Neon CLI подключён к PostgreSQL-проекту и ветке `production`. `neon.ts` описывает только правила веток Neon; таблицы приложения создаются миграциями Drizzle. Локальная связь `.neon` и файл `.env.neon` с URL базы не коммитятся.
-
-1. В Netlify выберите **Add new project → Import an existing project** и подключите Git-репозиторий. Netlify использует `netlify.toml` для команды сборки и версию Node.js.
-2. В **Project configuration → Environment variables** добавьте для Production и Deploy Previews:
-   - `DATABASE_URL` — строка подключения к облачному PostgreSQL; для serverless рекомендуется pooled URL провайдера.
-   - `BETTER_AUTH_SECRET` — отдельный случайный секрет. Создайте его командой `pnpm exec auth secret`; не публикуйте и не добавляйте в Git.
-   - `BETTER_AUTH_URL` — постоянный HTTPS-адрес production-сайта, например `https://ваш-проект.netlify.app`.
-3. Примените миграции и демоданные к облачной базе до первой регистрации. Из PowerShell, в копии проекта, задайте `DATABASE_URL` на время команд:
-
-   ```powershell
-   $env:DATABASE_URL = "строка-подключения-к-облачной-базе"
-   pnpm db:migrate
-   pnpm db:seed
-   Remove-Item Env:DATABASE_URL
-   ```
-
-   Вставьте строку подключения только в локальный терминал и не сохраняйте её в репозитории.
-4. Запустите первый production deploy и зарегистрируйте аккаунт. Deploy Previews используют production-базу только если вы включили для них ту же переменную `DATABASE_URL`; при необходимости заведите отдельную базу для превью.
-
-Файлы ограничены 4 МБ, чтобы укладываться в ограничение Netlify Functions для бинарных запросов. Бесплатный тариф Netlify имеет месячный лимит использования, поэтому публичная демоверсия может приостанавливаться при его исчерпании.
-
 ## Работа со схемой
 
 После изменений в `src/db/schema.ts` сгенерируйте миграцию и примените её:

@@ -58,9 +58,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #8cb98c; outline-
 .upgrade-card p { color: #9ea79c; font-size: 10px; line-height: 1.55; margin: 6px 0 10px; }
 .upgrade-card button { align-items: center; background: transparent; border: 0; color: #c1d6b9; display: flex; font-size: 10px; gap: 6px; padding: 0; }
 .utility-item { margin-bottom: 12px; }
-.profile-row { align-items: center; background: transparent; border: 0; border-top: 1px solid #353c36; color: #dfe4de; display: flex; gap: 9px; padding: 14px 2px 0; text-align: left; width: 100%; }
+.profile-menu-wrap { position: relative; }
+.profile-row { align-items: center; border-top: 1px solid #353c36; color: #dfe4de; display: flex; gap: 9px; padding: 14px 2px 0; width: 100%; }
 .profile-avatar, .top-avatar { align-items: center; background: #c6d9bc; border: 0; border-radius: 50%; color: #3d5e3d; display: flex; flex: 0 0 31px; font-size: 11px; font-weight: 700; height: 31px; justify-content: center; width: 31px; }
-.profile-row > svg { color: #8c958b; }
+.profile-menu-trigger { align-items: center; background: transparent; border: 0; border-radius: 6px; color: #8c958b; display: inline-flex; height: 30px; justify-content: center; width: 30px; }
+.profile-menu-trigger:hover { background: #343d35; color: #eef4ec; }
+.profile-menu { background: #2a302b; border: 1px solid #424b42; border-radius: 8px; bottom: calc(100% + 8px); box-shadow: 0 8px 24px #1118; min-width: 190px; padding: 5px; position: absolute; right: 0; z-index: 10; }
+.profile-menu button { align-items: center; background: transparent; border: 0; border-radius: 5px; color: #e7ebe5; display: flex; font-size: 12px; gap: 9px; padding: 9px 10px; text-align: left; width: 100%; }
+.profile-menu button:hover { background: #3a433b; }
 .main-area { flex: 1; min-width: 0; }
 .topbar { align-items: center; background: #fff; border-bottom: 1px solid var(--line); display: flex; height: 62px; justify-content: space-between; padding: 0 42px; }
 .breadcrumbs { align-items: center; color: #8a9189; display: flex; font-size: 11px; gap: 9px; }

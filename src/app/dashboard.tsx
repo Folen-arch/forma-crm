@@ -21,6 +21,7 @@ import {
   FileText,
   FolderKanban,
   LayoutDashboard,
+  LogOut,
   Menu,
   MoreHorizontal,
   Pencil,
@@ -230,7 +231,7 @@ function CreateModal({
   record?: EditorRecord;
   projects: Project[];
   onClose: () => void;
-  onSave: (values: { name: string; company: string; email: string; phone: string; budget: number; dueDate: string; dueTime: string; status: Invoice["status"] }) => Promise<void>;
+  onSave: (values: { name: string; company: string; email: string; phone: string; budget: number; dueDate: string; dueTime: string; status: string }) => Promise<void>;
   onDelete?: () => Promise<void>;
 }) {
   const [name, setName] = useState(record?.name ?? "");
@@ -240,7 +241,8 @@ function CreateModal({
   const [budget, setBudget] = useState(record?.budget ? String(record.budget) : "");
   const [dueDate, setDueDate] = useState(record?.dueDate ?? todayInKyiv());
   const [dueTime, setDueTime] = useState(record?.dueTime ?? "10:30");
-  const [status, setStatus] = useState<Invoice["status"]>((record?.status as Invoice["status"] | undefined) ?? "sent");
+  const projectStatus = record?.status === "Ожидает оплаты" ? "awaiting_payment" : record?.status === "Завершён" ? "completed" : "active";
+  const [status, setStatus] = useState<string>(kind === "проект" ? projectStatus : (record?.status as Invoice["status"] | undefined) ?? "sent");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const remove = async () => {
@@ -297,6 +299,8 @@ function CreateModal({
           </> : kind === "проект" ? <>
             <label className="form-label" htmlFor="record-budget">Бюджет, ₴<span>необязательно</span></label>
             <input id="record-budget" type="number" min="0" step="1" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="Например, 45000" />
+            <label className="form-label" htmlFor="record-status">Статус проекта</label>
+            <select id="record-status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="active">В работе</option><option value="awaiting_payment">Ожидает оплаты</option><option value="completed">Завершён</option></select>
           </> : kind === "задачу" ? <div className="task-date-fields">
             <div><label className="form-label" htmlFor="record-date">Дата</label><input id="record-date" type="date" required value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></div>
             <div><label className="form-label" htmlFor="record-time">Время</label><input id="record-time" type="time" required value={dueTime} onChange={(event) => setDueTime(event.target.value)} /></div>
@@ -422,6 +426,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
   const [modal, setModal] = useState<ModalState>(null);
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
 
@@ -539,7 +544,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
     window.setTimeout(() => setToast(""), 2800);
   };
 
-  const saveRecord = async ({ name, company, email, phone, budget, dueDate, dueTime, status }: { name: string; company: string; email: string; phone: string; budget: number; dueDate: string; dueTime: string; status: Invoice["status"] }) => {
+  const saveRecord = async ({ name, company, email, phone, budget, dueDate, dueTime, status }: { name: string; company: string; email: string; phone: string; budget: number; dueDate: string; dueTime: string; status: string }) => {
     const currentModal = modal;
     if (!currentModal) return;
     const { kind, record } = currentModal;
@@ -553,7 +558,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         body: JSON.stringify(kind === "клиента"
           ? { name, company, email, phone }
           : kind === "проект"
-            ? { name, clientName: company, budget }
+            ? { name, clientName: company, budget, status }
             : kind === "задачу" ? { title: name, projectName: company, dueDate, dueTime }
               : { invoiceNumber: name, projectName: company, amount: budget, dueDate, status }),
       });
@@ -587,11 +592,11 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
       const color = ["dot-green", "dot-violet", "dot-orange"][projects.length % 3];
       const project = savedToDatabase && result.data && "name" in result.data && "color" in result.data
         ? result.data
-        : { id: record?.id, name, color, clientName: company, budget, status: "В работе" };
+        : { id: record?.id, name, color, clientName: company, budget, status: status === "completed" ? "Завершён" : status === "awaiting_payment" ? "Ожидает оплаты" : "В работе" };
       if (record) {
         setProjects((current) => current.map((item) => {
           if (!(item.id === record.id || (!record.id && item.name === record.name))) return item;
-          return savedToDatabase ? project : { ...item, name, clientName: company, budget };
+          return savedToDatabase ? project : { ...item, name, clientName: company, budget, status: status === "completed" ? "Завершён" : status === "awaiting_payment" ? "Ожидает оплаты" : "В работе" };
         }));
       } else {
         setProjects((current) => [project, ...current]);
@@ -624,7 +629,8 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
       }
       showToast(savedToDatabase ? `Задача «${name}» сохранена` : `Задача «${name}» сохранена только в демо-сессии`);
     } else {
-      const fallback: Invoice = { id: record?.id, invoiceNumber: name || `INV-${Date.now().toString().slice(-6)}`, projectName: company, clientName: projects.find((project) => project.name === company)?.clientName ?? "", amount: budget, dueDate, status, statusLabel: ({ draft: "Черновик", sent: "Отправлен", paid: "Оплачен", overdue: "Просрочен" })[status] };
+      const invoiceStatus = status as Invoice["status"];
+      const fallback: Invoice = { id: record?.id, invoiceNumber: name || `INV-${Date.now().toString().slice(-6)}`, projectName: company, clientName: projects.find((project) => project.name === company)?.clientName ?? "", amount: budget, dueDate, status: invoiceStatus, statusLabel: ({ draft: "Черновик", sent: "Отправлен", paid: "Оплачен", overdue: "Просрочен" })[invoiceStatus] };
       const invoice = savedToDatabase && result.data && "invoiceNumber" in result.data ? result.data : fallback;
       if (record) setInvoices((current) => current.map((item) => item.id === record.id || (!record.id && item.invoiceNumber === record.name) ? invoice : item));
       else setInvoices((current) => [invoice, ...current]);
@@ -761,7 +767,10 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         <div className="sidebar-bottom">
           <div className="upgrade-card"><div className="upgrade-spark"><Sparkles size={16} /></div><strong>Работайте в своём ритме</strong><p>Соберите все проекты и финансы в одном месте.</p><button onClick={() => showToast(`Вы уже используете ${workspaceName}`)}>Посмотреть тарифы<ArrowRight size={14} /></button></div>
           <button className="nav-item utility-item" onClick={() => showToast("Центр помощи скоро появится")}><CircleHelp size={17} /><span>Помощь и поддержка</span></button>
-          <button className="profile-row" onClick={() => { void authClient.signOut().then(() => { router.replace("/login"); router.refresh(); }); }}><span className="profile-avatar">{avatar}</span><span className="workspace-copy"><b>{user.name}</b><small>Выйти из аккаунта</small></span><MoreHorizontal size={19} /></button>
+          <div className="profile-menu-wrap">
+            {profileMenuOpen && <div className="profile-menu" role="menu"><button type="button" role="menuitem" onClick={() => { setProfileMenuOpen(false); void authClient.signOut().then(() => { router.replace("/login"); router.refresh(); }).catch(() => showToast("Не удалось выйти из аккаунта.")); }}><LogOut size={15} />Выйти из аккаунта</button></div>}
+            <div className="profile-row"><span className="profile-avatar">{avatar}</span><span className="workspace-copy"><b>{user.name}</b><small>Рабочий профиль</small></span><button type="button" className="profile-menu-trigger" aria-label="Меню аккаунта" aria-haspopup="menu" aria-expanded={profileMenuOpen} onClick={() => setProfileMenuOpen((open) => !open)}><MoreHorizontal size={19} /></button></div>
+          </div>
         </div>
       </aside>
 

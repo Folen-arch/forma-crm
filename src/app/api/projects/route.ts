@@ -9,6 +9,7 @@ const createProjectSchema = z.object({
   name: z.string().trim().min(2, "Введите название проекта.").max(160),
   clientName: z.string().trim().max(160).optional().default(""),
   budget: z.number().int().min(0).max(100_000_000).optional().default(0),
+  status: z.enum(["active", "awaiting_payment", "completed"]).optional().default("active"),
 });
 
 const statusLabels = {
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
       clientName: clientName || null,
       name: parsed.data.name,
       budget: parsed.data.budget,
+      status: parsed.data.status,
     }).returning();
 
     if (!created) throw new Error("Project insert did not return a row.");

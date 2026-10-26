@@ -130,6 +130,11 @@ h1 { color: #232923; font-size: 26px; font-weight: 600; letter-spacing: -.8px; l
 .panel-title-row { align-items: center; display: flex; gap: 8px; }
 .panel-heading h2 { color: #2b312b; font-size: 13px; font-weight: 600; letter-spacing: -.1px; margin: 0; }
 .info-dot { align-items: center; border: 1px solid #daddd7; border-radius: 50%; color: #9aa199; display: inline-flex; font-size: 8px; height: 13px; justify-content: center; width: 13px; }
+.info-hint { display: inline-flex; position: relative; }
+.info-hint .info-dot { background: #fff; cursor: help; padding: 0; }
+.info-hint .info-dot:hover, .info-hint .info-dot:focus-visible { border-color: #71956b; color: #4f7950; }
+.info-tooltip { background: #263029; border: 1px solid #3d4c3f; border-radius: 7px; bottom: calc(100% + 9px); box-shadow: 0 8px 20px #17201724; color: #f3f5f1; font-size: 11px; font-weight: 400; left: 50%; line-height: 1.5; opacity: 0; padding: 9px 11px; pointer-events: none; position: absolute; transform: translate(-50%, 3px); transition: opacity .15s ease, transform .15s ease; visibility: hidden; width: 230px; z-index: 20; }
+.info-hint:hover .info-tooltip, .info-hint:focus-within .info-tooltip { opacity: 1; transform: translate(-50%, 0); visibility: visible; }
 .revenue-total { align-items: center; color: #2c332c; display: flex; font-size: 20px; font-weight: 600; gap: 9px; letter-spacing: -.5px; margin-top: 10px; }
 .period-switch { background: #f6f7f4; border-radius: 6px; display: flex; gap: 2px; padding: 3px; }
 .period-switch button { background: transparent; border: 0; border-radius: 4px; color: #888f87; font-size: 9px; height: 24px; padding: 0 8px; }

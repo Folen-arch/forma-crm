@@ -348,9 +348,10 @@ function ClientsTable({ clients, onEdit, emptyMessage }: {
   );
 }
 
-function ProjectsTable({ projects, onEdit }: {
+function ProjectsTable({ projects, onEdit, emptyMessage }: {
   projects: Project[];
   onEdit: (project: Project) => void;
+  emptyMessage: string;
 }) {
   return (
     <div className="table-scroll">
@@ -365,7 +366,7 @@ function ProjectsTable({ projects, onEdit }: {
               <td><span className={`status-pill ${project.status === "Завершён" ? "status-done" : project.status === "Ожидает оплаты" ? "status-pending" : "status-work"}`}><i />{project.status ?? "В работе"}</span></td>
               <td><button className="row-more" aria-label={`Редактировать: ${project.name}`} onClick={() => onEdit(project)}><Pencil size={15} /></button></td>
             </tr>
-          )) : <tr><td colSpan={5} className="empty-state">Проектов пока нет. Создайте первый проект.</td></tr>}
+          )) : <tr><td colSpan={5} className="empty-state">{emptyMessage}</td></tr>}
         </tbody>
       </table>
     </div>
@@ -410,10 +411,10 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
   const [activeNav, setActiveNav] = useState("Обзор");
   const [period, setPeriod] = useState("За месяц");
   const [search, setSearch] = useState("");
-  const [clients, setClients] = useState<Client[]>(initialClients);
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [tasks, setTasks] = useState<Task[]>(() => demoTasks(initialDemoDate));
-  const [invoices, setInvoices] = useState<Invoice[]>(() => demoInvoices(initialDemoDate));
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [unreadActivityCount, setUnreadActivityCount] = useState(0);
@@ -437,8 +438,6 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
     const loadRecords = async () => {
       const today = todayInKyiv();
       setCurrentDate(today);
-      setTasks(demoTasks(today));
-      setInvoices(demoInvoices(today));
       try {
         const [clientsResponse, projectsResponse, tasksResponse, invoicesResponse, documentsResponse, activityResponse] = await Promise.all([
           fetch("/api/clients"),
@@ -449,7 +448,13 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
           fetch("/api/activity"),
         ]);
         if (!clientsResponse.ok || !projectsResponse.ok || !tasksResponse.ok || !invoicesResponse.ok || !documentsResponse.ok || !activityResponse.ok) {
-          if (active) setStorageMode("demo");
+          if (active) {
+            setClients(initialClients);
+            setProjects(initialProjects);
+            setTasks(demoTasks(today));
+            setInvoices(demoInvoices(today));
+            setStorageMode("demo");
+          }
           return;
         }
 
@@ -471,7 +476,13 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         setUnreadActivityCount(activityPayload.unreadCount);
         setStorageMode("database");
       } catch {
-        if (active) setStorageMode("demo");
+        if (active) {
+          setClients(initialClients);
+          setProjects(initialProjects);
+          setTasks(demoTasks(today));
+          setInvoices(demoInvoices(today));
+          setStorageMode("demo");
+        }
       }
     };
     void loadRecords();
@@ -757,7 +768,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         <div className="nav-caption">РАБОЧЕЕ</div>
         <nav className="main-nav" aria-label="Основная навигация">
           {navItems.map(({ label, icon: Icon }) => {
-            const count = label === "Клиенты" ? clients.length : label === "Проекты" ? projects.length : label === "Активность" ? unreadActivityCount : null;
+            const count = storageMode === "loading" ? null : label === "Клиенты" ? clients.length : label === "Проекты" ? projects.length : label === "Активность" ? unreadActivityCount : null;
             return (
               <button key={label} className={`nav-item ${activeNav === label ? "active" : ""}`} onClick={() => { if (label === "Активность") void openActivity(); else { setActiveNav(label); setMenuOpen(false); } }}>
                 <Icon size={17} strokeWidth={1.8} /><span>{label}</span>{count !== null && (label !== "Активность" || count > 0) && <span className="nav-count">{count}</span>}
@@ -792,27 +803,27 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
 
           {activeNav === "Обзор" && <>
           <section className="stats-grid" aria-label="Ключевые показатели">
-            <article className="stat-card"><div className="stat-top"><span>Бюджет проектов</span><span className="stat-icon sage-icon"><WalletCards size={17} /></span></div><div className="stat-value">{money(projectBudget)}</div><div className="stat-foot"><span>{projects.length} проектов</span><span>в рабочем пространстве</span><span className="mini-sparkline spark-one"><i /><i /><i /><i /><i /><i /><i /></span></div></article>
-            <article className="stat-card"><div className="stat-top"><span>Активные проекты</span><span className="stat-icon lilac-icon"><BriefcaseBusiness size={17} /></span></div><div className="stat-value">{String(activeProjectCount).padStart(2, "0")}<span className="stat-unit"> / {String(projects.length).padStart(2, "0")}</span></div><div className="stat-foot"><span className="stat-neutral">{projects.length - activeProjectCount} завершено</span><span>из всех проектов</span><span className="mini-sparkline spark-two"><i /><i /><i /><i /><i /><i /><i /></span></div></article>
-            <article className="stat-card"><div className="stat-top"><span>Ожидают оплаты</span><span className="stat-icon apricot-icon"><CreditCard size={17} /></span></div><div className="stat-value">{money(awaitingPayment)}</div><div className="stat-foot"><span className="trend-warn"><Clock3 size={13} />{projects.filter((project) => project.status === "Ожидает оплаты").length} проекта</span><span>по бюджетам проектов</span><span className="mini-sparkline spark-three"><i /><i /><i /><i /><i /><i /><i /></span></div></article>
-            <article className="stat-card"><div className="stat-top"><span>Клиенты</span><span className="stat-icon blue-icon"><UsersRound size={17} /></span></div><div className="stat-value">{String(clients.length).padStart(2, "0")}</div><div className="stat-foot"><span>{clients.length ? "Ведутся в Forma" : "Добавьте первого клиента"}</span><span className="mini-sparkline spark-four"><i /><i /><i /><i /><i /><i /><i /></span></div></article>
+            <article className="stat-card"><div className="stat-top"><span>Бюджет проектов</span><span className="stat-icon sage-icon"><WalletCards size={17} /></span></div><div className="stat-value">{storageMode === "loading" ? "—" : money(projectBudget)}</div><div className="stat-foot"><span>{storageMode === "loading" ? "Загружаем данные…" : `${projects.length} проектов`}</span>{storageMode !== "loading" && <><span>в рабочем пространстве</span><span className="mini-sparkline spark-one"><i /><i /><i /><i /><i /><i /><i /></span></>}</div></article>
+            <article className="stat-card"><div className="stat-top"><span>Активные проекты</span><span className="stat-icon lilac-icon"><BriefcaseBusiness size={17} /></span></div><div className="stat-value">{storageMode === "loading" ? "—" : <>{String(activeProjectCount).padStart(2, "0")}<span className="stat-unit"> / {String(projects.length).padStart(2, "0")}</span></>}</div><div className="stat-foot">{storageMode === "loading" ? "Загружаем данные…" : <><span className="stat-neutral">{projects.length - activeProjectCount} завершено</span><span>из всех проектов</span><span className="mini-sparkline spark-two"><i /><i /><i /><i /><i /><i /><i /></span></>}</div></article>
+            <article className="stat-card"><div className="stat-top"><span>Ожидают оплаты</span><span className="stat-icon apricot-icon"><CreditCard size={17} /></span></div><div className="stat-value">{storageMode === "loading" ? "—" : money(awaitingPayment)}</div><div className="stat-foot">{storageMode === "loading" ? "Загружаем данные…" : <><span className="trend-warn"><Clock3 size={13} />{projects.filter((project) => project.status === "Ожидает оплаты").length} проекта</span><span>по бюджетам проектов</span><span className="mini-sparkline spark-three"><i /><i /><i /><i /><i /><i /><i /></span></>}</div></article>
+            <article className="stat-card"><div className="stat-top"><span>Клиенты</span><span className="stat-icon blue-icon"><UsersRound size={17} /></span></div><div className="stat-value">{storageMode === "loading" ? "—" : String(clients.length).padStart(2, "0")}</div><div className="stat-foot">{storageMode === "loading" ? "Загружаем данные…" : <><span>{clients.length ? "Ведутся в Forma" : "Добавьте первого клиента"}</span><span className="mini-sparkline spark-four"><i /><i /><i /><i /><i /><i /><i /></span></>}</div></article>
           </section>
 
           <section className="middle-grid">
-            <article className="panel revenue-panel"><div className="panel-heading"><div><div className="panel-title-row"><h2>{storageMode === "database" ? "Бюджет проектов" : "Демо-график доходов"}</h2><span className="info-hint"><button type="button" className="info-dot" aria-label="Пояснение к бюджету проектов" aria-describedby="project-budget-tooltip">i</button><span className="info-tooltip" id="project-budget-tooltip" role="tooltip">{storageMode === "database" ? "Сумма бюджетов всех проектов. Фактические оплаты учитываются в разделе «Финансы»." : "Демонстрационные значения для примера. Они не являются реальными доходами."}</span></span></div><div className="revenue-total">{storageMode === "database" ? money(projectBudget) : chart.total}{storageMode === "database" ? <span className="stat-neutral">по проектам</span> : <span className="trend-positive"><ArrowUpRight size={14} />{chart.change}</span>}</div></div>{storageMode !== "database" && <div className="period-switch" role="group" aria-label="Период дохода">{Object.keys(chartSets).map((item) => <button key={item} onClick={() => setPeriod(item)} className={period === item ? "selected" : ""}>{item.replace("За ", "")}</button>)}</div>}</div>{storageMode === "database" ? <div className="chart-empty"><span className="stat-icon sage-icon"><FileText size={17} /></span><b>История платежей появится вместе со счетами</b><p>Пока здесь показана сумма бюджетов всех проектов.</p></div> : <div className="chart-area"><div className="chart-y-labels"><span>100к</span><span>75к</span><span>50к</span><span>25к</span></div><RevenueChart values={chart.values} /><div className="chart-x-labels">{chart.labels.map((label) => <span key={label}>{label}</span>)}</div></div>}</article>
+            <article className="panel revenue-panel"><div className="panel-heading"><div><div className="panel-title-row"><h2>{storageMode === "loading" ? "Загрузка данных" : storageMode === "database" ? "Бюджет проектов" : "Демо-график доходов"}</h2><span className="info-hint"><button type="button" className="info-dot" aria-label="Пояснение к бюджету проектов" aria-describedby="project-budget-tooltip">i</button><span className="info-tooltip" id="project-budget-tooltip" role="tooltip">{storageMode === "database" ? "Сумма бюджетов всех проектов. Фактические оплаты учитываются в разделе «Финансы»." : "Демонстрационные значения для примера. Они не являются реальными доходами."}</span></span></div><div className="revenue-total">{storageMode === "loading" ? "—" : storageMode === "database" ? money(projectBudget) : chart.total}{storageMode === "loading" ? null : storageMode === "database" ? <span className="stat-neutral">по проектам</span> : <span className="trend-positive"><ArrowUpRight size={14} />{chart.change}</span>}</div></div>{storageMode === "demo" && <div className="period-switch" role="group" aria-label="Период дохода">{Object.keys(chartSets).map((item) => <button key={item} onClick={() => setPeriod(item)} className={period === item ? "selected" : ""}>{item.replace("За ", "")}</button>)}</div>}</div>{storageMode === "loading" ? <div className="chart-empty"><b>Загружаем данные из базы…</b></div> : storageMode === "database" ? <div className="chart-empty"><span className="stat-icon sage-icon"><FileText size={17} /></span><b>История платежей появится вместе со счетами</b><p>Пока здесь показана сумма бюджетов всех проектов.</p></div> : <div className="chart-area"><div className="chart-y-labels"><span>100к</span><span>75к</span><span>50к</span><span>25к</span></div><RevenueChart values={chart.values} /><div className="chart-x-labels">{chart.labels.map((label) => <span key={label}>{label}</span>)}</div></div>}</article>
 
             <article className="panel tasks-panel"><div className="panel-heading task-heading"><div><h2>На сегодня</h2><p>{todayTasks.length} задач, {todayTasks.filter((task) => task.isCompleted).length} выполнено</p></div><button className="tiny-icon" aria-label="Показать все задачи" onClick={() => setActiveNav("Календарь")}><ArrowRight size={16} /></button></div><TaskList tasks={todayTasks.slice(0, 4)} onToggle={(task) => { void toggleTask(task); }} onEdit={(task) => setModal({ kind: "задачу", record: { id: task.id, name: task.title, company: task.projectName, dueDate: task.dueDate, dueTime: task.dueTime, isCompleted: task.isCompleted } })} emptyMessage="На сегодня задач нет. Добавьте первую." /><button className="all-tasks-button" onClick={() => setActiveNav("Календарь")}>Все задачи дня<ArrowRight size={14} /></button></article>
           </section>
 
-          <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Последние клиенты</h2><span className="client-total">{clients.length}</span></div><p>Следите за активностью и оплатами</p></div><div className="client-actions"><button className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти клиента" /></button><button className="text-button" onClick={() => setActiveNav("Клиенты")}>Все клиенты<ArrowRight size={14} /></button></div></div>
-            <ClientsTable clients={filteredClients.slice(0, 5)} onEdit={(client) => setModal({ kind: "клиента", record: client })} emptyMessage="Клиентов пока нет. Добавьте первого клиента." />
-            <div className="table-footer"><span>Показано {Math.min(filteredClients.length, 5)} из {clients.length} клиентов</span><button className="text-button" onClick={() => setActiveNav("Клиенты")}>Открыть список<ArrowRight size={14} /></button></div>
+          <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Последние клиенты</h2><span className="client-total">{storageMode === "loading" ? "—" : clients.length}</span></div><p>Следите за активностью и оплатами</p></div><div className="client-actions"><button className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти клиента" /></button><button className="text-button" onClick={() => setActiveNav("Клиенты")}>Все клиенты<ArrowRight size={14} /></button></div></div>
+            <ClientsTable clients={filteredClients.slice(0, 5)} onEdit={(client) => setModal({ kind: "клиента", record: client })} emptyMessage={storageMode === "loading" ? "Загружаем клиентов…" : "Клиентов пока нет. Добавьте первого клиента."} />
+            <div className="table-footer"><span>{storageMode === "loading" ? "Загружаем список клиентов…" : `Показано ${Math.min(filteredClients.length, 5)} из ${clients.length} клиентов`}</span><button className="text-button" onClick={() => setActiveNav("Клиенты")}>Открыть список<ArrowRight size={14} /></button></div>
           </section>
           </>}
 
-          {activeNav === "Клиенты" && <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Все клиенты</h2><span className="client-total">{clients.length}</span></div><p>Карточки клиентов вашего рабочего пространства</p></div><div className="client-actions"><label className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти клиента" /></label></div></div><ClientsTable clients={filteredClients} onEdit={(client) => setModal({ kind: "клиента", record: client })} emptyMessage="Клиентов пока нет. Добавьте первого клиента." /><div className="table-footer"><span>Показано {filteredClients.length} из {clients.length} клиентов</span></div></section>}
+          {activeNav === "Клиенты" && <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Все клиенты</h2><span className="client-total">{storageMode === "loading" ? "—" : clients.length}</span></div><p>Карточки клиентов вашего рабочего пространства</p></div><div className="client-actions"><label className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти клиента" /></label></div></div><ClientsTable clients={filteredClients} onEdit={(client) => setModal({ kind: "клиента", record: client })} emptyMessage={storageMode === "loading" ? "Загружаем клиентов…" : "Клиентов пока нет. Добавьте первого клиента."} /><div className="table-footer"><span>{storageMode === "loading" ? "Загружаем список клиентов…" : `Показано ${filteredClients.length} из ${clients.length} клиентов`}</span></div></section>}
 
-          {activeNav === "Проекты" && <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Все проекты</h2><span className="client-total">{projects.length}</span></div><p>Название, клиент, бюджет и текущий статус</p></div><div className="client-actions"><label className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти проект" /></label></div></div><ProjectsTable projects={filteredProjects} onEdit={(project) => setModal({ kind: "проект", record: project })} /><div className="table-footer"><span>Показано {filteredProjects.length} из {projects.length} проектов</span></div></section>}
+          {activeNav === "Проекты" && <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Все проекты</h2><span className="client-total">{storageMode === "loading" ? "—" : projects.length}</span></div><p>Название, клиент, бюджет и текущий статус</p></div><div className="client-actions"><label className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти проект" /></label></div></div><ProjectsTable projects={filteredProjects} onEdit={(project) => setModal({ kind: "проект", record: project })} emptyMessage={storageMode === "loading" ? "Загружаем проекты…" : "Проектов пока нет. Создайте первый проект."} /><div className="table-footer"><span>{storageMode === "loading" ? "Загружаем список проектов…" : `Показано ${filteredProjects.length} из ${projects.length} проектов`}</span></div></section>}
 
           {activeNav === "Финансы" && <section className="finance-view"><div className="stats-grid"><article className="stat-card"><div className="stat-top"><span>Ожидают оплаты</span><span className="stat-icon apricot-icon"><CreditCard size={17} /></span></div><div className="stat-value">{money(invoiceOutstanding)}</div><div className="stat-foot">{invoices.filter((invoice) => invoice.status === "sent" || invoice.status === "overdue").length} счетов отправлено или просрочено</div></article><article className="stat-card"><div className="stat-top"><span>Получено</span><span className="stat-icon sage-icon"><WalletCards size={17} /></span></div><div className="stat-value">{money(invoicePaid)}</div><div className="stat-foot">{invoices.filter((invoice) => invoice.status === "paid").length} оплаченных счетов</div></article><article className="stat-card"><div className="stat-top"><span>Все счета</span><span className="stat-icon lilac-icon"><FileText size={17} /></span></div><div className="stat-value">{invoices.length}</div><div className="stat-foot">В этом рабочем пространстве</div></article></div><section className="panel clients-panel"><div className="panel-heading clients-heading"><div><h2>Счета</h2><p>Сроки оплаты и финансовый статус по проектам</p></div><label className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти счёт" /></label></div><InvoicesTable invoices={filteredInvoices} onEdit={(invoice) => setModal({ kind: "счёт", record: { id: invoice.id, name: invoice.invoiceNumber, company: invoice.projectName, budget: invoice.amount, dueDate: invoice.dueDate, status: invoice.status } })} /></section></section>}
 

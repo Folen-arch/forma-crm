@@ -427,6 +427,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [topProfileOpen, setTopProfileOpen] = useState(false);
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
@@ -783,7 +784,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         <header className="topbar">
           <button className="mobile-menu icon-button" aria-label="Открыть меню" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
           <div className="breadcrumbs"><span>{workspaceName}</span><ChevronRight size={14} /><b>{activeNav}</b></div>
-          <div className="topbar-actions"><label className="global-search"><Search size={16} /><input ref={searchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск по студии..." /><kbd><Command size={11} /> K</kbd></label><button className="icon-button notification-button" aria-label={`Уведомления${unreadActivityCount ? `, непрочитанных: ${unreadActivityCount}` : ""}`} onClick={() => { void openActivity(); }}><Bell size={18} />{unreadActivityCount > 0 && <i />}</button><span className="top-avatar" aria-hidden="true">{avatar}</span></div>
+          <div className="topbar-actions"><label className="global-search"><Search size={16} /><input ref={searchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск по студии..." /><kbd><Command size={11} /> K</kbd></label><button className="icon-button notification-button" aria-label={`Уведомления${unreadActivityCount ? `, непрочитанных: ${unreadActivityCount}` : ""}`} onClick={() => { void openActivity(); }}><Bell size={18} />{unreadActivityCount > 0 && <i />}</button><div className="top-profile-wrap"><button type="button" className="top-avatar" aria-label={`Открыть меню профиля ${user.name}`} aria-haspopup="menu" aria-expanded={topProfileOpen} onClick={() => setTopProfileOpen((open) => !open)}>{avatar}</button>{topProfileOpen && <div className="top-profile-menu" role="menu"><div className="top-profile-summary"><b>{user.name}</b><small>{user.email}</small></div><button type="button" role="menuitem" onClick={() => { setTopProfileOpen(false); void authClient.signOut().then(() => { router.replace("/login"); router.refresh(); }).catch(() => showToast("Не удалось выйти из аккаунта.")); }}><LogOut size={15} />Выйти из аккаунта</button></div>}</div></div>
         </header>
 
         <div className="content-wrap">

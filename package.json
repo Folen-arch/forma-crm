@@ -13,6 +13,8 @@
     "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
+    "@neon/config": "^1.9.4",
+    "@neon/env": "^1.6.5",
     "better-auth": "1.7.13",
     "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.61.0",

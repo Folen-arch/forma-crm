@@ -67,6 +67,8 @@
 
 Проект настроен для сборки в Netlify через Next.js adapter. Перед подключением создайте облачную PostgreSQL-базу и загрузите проект в Git-репозиторий.
 
+Для текущей разработки Neon CLI подключён к PostgreSQL-проекту и ветке `production`. `neon.ts` описывает только правила веток Neon; таблицы приложения создаются миграциями Drizzle. Локальная связь `.neon` и файл `.env.neon` с URL базы не коммитятся.
+
 1. В Netlify выберите **Add new project → Import an existing project** и подключите Git-репозиторий. Netlify использует `netlify.toml` для команды сборки и версию Node.js.
 2. В **Project configuration → Environment variables** добавьте для Production и Deploy Previews:
    - `DATABASE_URL` — строка подключения к облачному PostgreSQL; для serverless рекомендуется pooled URL провайдера.

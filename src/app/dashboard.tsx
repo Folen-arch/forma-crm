@@ -184,13 +184,13 @@ const initialProjects: Project[] = [
 ];
 
 const navItems = [
-  { label: "Обзор", icon: LayoutDashboard },
-  { label: "Клиенты", icon: UsersRound },
-  { label: "Проекты", icon: FolderKanban },
-  { label: "Финансы", icon: WalletCards },
-  { label: "Календарь", icon: CalendarDays },
-  { label: "Документы", icon: FileText },
-  { label: "Активность", icon: Activity },
+  { tab: "overview", label: "Обзор", icon: LayoutDashboard },
+  { tab: "clients", label: "Клиенты", icon: UsersRound },
+  { tab: "projects", label: "Проекты", icon: FolderKanban },
+  { tab: "finance", label: "Финансы", icon: WalletCards },
+  { tab: "calendar", label: "Календарь", icon: CalendarDays },
+  { tab: "documents", label: "Документы", icon: FileText },
+  { tab: "activity", label: "Активность", icon: Activity },
 ];
 
 const chartSets: Record<string, { values: number[]; labels: string[]; total: string; change: string }> = {
@@ -406,11 +406,11 @@ function TaskList({ tasks, onToggle, onEdit, showDate = false, emptyMessage }: {
   );
 }
 
-export default function Home({ user, workspaceName }: { user: { name: string; email: string }; workspaceName: string }) {
+export default function Home({ user, workspaceName, initialTab }: { user: { name: string; email: string }; workspaceName: string; initialTab: string }) {
   const router = useRouter();
   const firstName = user.name.trim().split(/\s+/)[0] || user.email.split("@")[0] || "Добрый день";
   const avatar = user.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "F";
-  const [activeNav, setActiveNav] = useState("Обзор");
+  const [activeNav, setActiveNav] = useState(() => navItems.find((item) => item.tab === initialTab)?.label ?? "Обзор");
   const [period, setPeriod] = useState("За месяц");
   const [search, setSearch] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
@@ -541,8 +541,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
   };
 
   const openActivity = async () => {
-    setActiveNav("Активность");
-    setMenuOpen(false);
+    selectSection("Активность");
     if (unreadActivityCount > 0) {
       const response = await fetch("/api/activity", { method: "POST" });
       if (!response.ok) return;
@@ -558,6 +557,26 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
     setToast(message);
     window.setTimeout(() => setToast(""), 2800);
   };
+
+  const selectSection = (label: string) => {
+    const selected = navItems.find((item) => item.label === label);
+    if (!selected) return;
+    setActiveNav(selected.label);
+    setMenuOpen(false);
+    const url = new URL(window.location.href);
+    if (selected.tab === "overview") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", selected.tab);
+    window.history.pushState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  useEffect(() => {
+    const syncSectionFromUrl = () => {
+      const tab = new URLSearchParams(window.location.search).get("tab") ?? "overview";
+      setActiveNav(navItems.find((item) => item.tab === tab)?.label ?? "Обзор");
+    };
+    window.addEventListener("popstate", syncSectionFromUrl);
+    return () => window.removeEventListener("popstate", syncSectionFromUrl);
+  }, []);
 
   const saveRecord = async ({ name, company, email, phone, budget, dueDate, dueTime, status }: { name: string; company: string; email: string; phone: string; budget: number; dueDate: string; dueTime: string; status: string }) => {
     const currentModal = modal;
@@ -772,7 +791,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
           {navItems.map(({ label, icon: Icon }) => {
             const count = storageMode === "loading" ? null : label === "Клиенты" ? clients.length : label === "Проекты" ? projects.length : label === "Активность" ? unreadActivityCount : null;
             return (
-              <button key={label} className={`nav-item ${activeNav === label ? "active" : ""}`} onClick={() => { if (label === "Активность") void openActivity(); else { setActiveNav(label); setMenuOpen(false); } }}>
+              <button key={label} className={`nav-item ${activeNav === label ? "active" : ""}`} onClick={() => { if (label === "Активность") void openActivity(); else selectSection(label); }}>
                 <Icon size={17} strokeWidth={1.8} /><span>{label}</span>{count !== null && (label !== "Активность" || count > 0) && <span className="nav-count">{count}</span>}
               </button>
             );
@@ -780,7 +799,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         </nav>
 
         <div className="sidebar-projects-heading"><span className="nav-caption">ВАШИ ПРОЕКТЫ</span><button className="tiny-icon" aria-label="Добавить проект" onClick={() => setModal({ kind: "проект" })}><Plus size={15} /></button></div>
-        <div className="project-links">{projects.slice(0, 5).map((project) => <button key={project.name} onClick={() => setActiveNav("Проекты")}><span className={`project-dot ${project.color}`} />{project.name}</button>)}</div>
+        <div className="project-links">{projects.slice(0, 5).map((project) => <button key={project.name} onClick={() => selectSection("Проекты")}><span className={`project-dot ${project.color}`} />{project.name}</button>)}</div>
 
         <div className="sidebar-bottom">
           <div className="upgrade-card"><div className="upgrade-spark"><Sparkles size={16} /></div><strong>Работайте в своём ритме</strong><p>Соберите все проекты и финансы в одном месте.</p><button onClick={() => showToast(`Вы уже используете ${workspaceName}`)}>Посмотреть тарифы<ArrowRight size={14} /></button></div>
@@ -814,12 +833,12 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
           <section className="middle-grid">
             <article className="panel revenue-panel"><div className="panel-heading"><div><div className="panel-title-row"><h2>{storageMode === "loading" ? "Загрузка данных" : storageMode === "database" ? "Бюджет проектов" : "Демо-график доходов"}</h2><span className="info-hint"><button type="button" className="info-dot" aria-label="Пояснение к бюджету проектов" aria-describedby="project-budget-tooltip">i</button><span className="info-tooltip" id="project-budget-tooltip" role="tooltip">{storageMode === "database" ? "Сумма бюджетов всех проектов. Фактические оплаты учитываются в разделе «Финансы»." : "Демонстрационные значения для примера. Они не являются реальными доходами."}</span></span></div><div className="revenue-total">{storageMode === "loading" ? "—" : storageMode === "database" ? money(projectBudget) : chart.total}{storageMode === "loading" ? null : storageMode === "database" ? <span className="stat-neutral">по проектам</span> : <span className="trend-positive"><ArrowUpRight size={14} />{chart.change}</span>}</div></div>{storageMode === "demo" && <div className="period-switch" role="group" aria-label="Период дохода">{Object.keys(chartSets).map((item) => <button key={item} onClick={() => setPeriod(item)} className={period === item ? "selected" : ""}>{item.replace("За ", "")}</button>)}</div>}</div>{storageMode === "loading" ? <div className="chart-empty"><b>Загружаем данные из базы…</b></div> : storageMode === "database" ? <div className="chart-empty"><span className="stat-icon sage-icon"><FileText size={17} /></span><b>История платежей появится вместе со счетами</b><p>Пока здесь показана сумма бюджетов всех проектов.</p></div> : <div className="chart-area"><div className="chart-y-labels"><span>100к</span><span>75к</span><span>50к</span><span>25к</span></div><RevenueChart values={chart.values} /><div className="chart-x-labels">{chart.labels.map((label) => <span key={label}>{label}</span>)}</div></div>}</article>
 
-            <article className="panel tasks-panel"><div className="panel-heading task-heading"><div><h2>На сегодня</h2><p>{todayTasks.length} задач, {todayTasks.filter((task) => task.isCompleted).length} выполнено</p></div><button className="tiny-icon" aria-label="Показать все задачи" onClick={() => setActiveNav("Календарь")}><ArrowRight size={16} /></button></div><TaskList tasks={todayTasks.slice(0, 4)} onToggle={(task) => { void toggleTask(task); }} onEdit={(task) => setModal({ kind: "задачу", record: { id: task.id, name: task.title, company: task.projectName, dueDate: task.dueDate, dueTime: task.dueTime, isCompleted: task.isCompleted } })} emptyMessage="На сегодня задач нет. Добавьте первую." /><button className="all-tasks-button" onClick={() => setActiveNav("Календарь")}>Все задачи дня<ArrowRight size={14} /></button></article>
+            <article className="panel tasks-panel"><div className="panel-heading task-heading"><div><h2>На сегодня</h2><p>{todayTasks.length} задач, {todayTasks.filter((task) => task.isCompleted).length} выполнено</p></div><button className="tiny-icon" aria-label="Показать все задачи" onClick={() => selectSection("Календарь")}><ArrowRight size={16} /></button></div><TaskList tasks={todayTasks.slice(0, 4)} onToggle={(task) => { void toggleTask(task); }} onEdit={(task) => setModal({ kind: "задачу", record: { id: task.id, name: task.title, company: task.projectName, dueDate: task.dueDate, dueTime: task.dueTime, isCompleted: task.isCompleted } })} emptyMessage="На сегодня задач нет. Добавьте первую." /><button className="all-tasks-button" onClick={() => selectSection("Календарь")}>Все задачи дня<ArrowRight size={14} /></button></article>
           </section>
 
-          <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Последние клиенты</h2><span className="client-total">{storageMode === "loading" ? "—" : clients.length}</span></div><p>Следите за активностью и оплатами</p></div><div className="client-actions"><button className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти клиента" /></button><button className="text-button" onClick={() => setActiveNav("Клиенты")}>Все клиенты<ArrowRight size={14} /></button></div></div>
+          <section className="panel clients-panel"><div className="panel-heading clients-heading"><div><div className="panel-title-row"><h2>Последние клиенты</h2><span className="client-total">{storageMode === "loading" ? "—" : clients.length}</span></div><p>Следите за активностью и оплатами</p></div><div className="client-actions"><button className="table-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти клиента" /></button><button className="text-button" onClick={() => selectSection("Клиенты")}>Все клиенты<ArrowRight size={14} /></button></div></div>
             <ClientsTable clients={filteredClients.slice(0, 5)} onEdit={(client) => setModal({ kind: "клиента", record: client })} emptyMessage={storageMode === "loading" ? "Загружаем клиентов…" : "Клиентов пока нет. Добавьте первого клиента."} />
-            <div className="table-footer"><span>{storageMode === "loading" ? "Загружаем список клиентов…" : `Показано ${Math.min(filteredClients.length, 5)} из ${clients.length} клиентов`}</span><button className="text-button" onClick={() => setActiveNav("Клиенты")}>Открыть список<ArrowRight size={14} /></button></div>
+            <div className="table-footer"><span>{storageMode === "loading" ? "Загружаем список клиентов…" : `Показано ${Math.min(filteredClients.length, 5)} из ${clients.length} клиентов`}</span><button className="text-button" onClick={() => selectSection("Клиенты")}>Открыть список<ArrowRight size={14} /></button></div>
           </section>
           </>}
 

@@ -783,7 +783,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         <header className="topbar">
           <button className="mobile-menu icon-button" aria-label="Открыть меню" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
           <div className="breadcrumbs"><span>{workspaceName}</span><ChevronRight size={14} /><b>{activeNav}</b></div>
-          <div className="topbar-actions"><label className="global-search"><Search size={16} /><input ref={searchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск по студии..." /><kbd><Command size={11} /> K</kbd></label><button className="icon-button notification-button" aria-label={`Уведомления${unreadActivityCount ? `, непрочитанных: ${unreadActivityCount}` : ""}`} onClick={() => { void openActivity(); }}><Bell size={18} />{unreadActivityCount > 0 && <i />}</button><button className="top-avatar" aria-label={`Профиль ${user.name}`}>{avatar}</button></div>
+          <div className="topbar-actions"><label className="global-search"><Search size={16} /><input ref={searchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск по студии..." /><kbd><Command size={11} /> K</kbd></label><button className="icon-button notification-button" aria-label={`Уведомления${unreadActivityCount ? `, непрочитанных: ${unreadActivityCount}` : ""}`} onClick={() => { void openActivity(); }}><Bell size={18} />{unreadActivityCount > 0 && <i />}</button><span className="top-avatar" aria-hidden="true">{avatar}</span></div>
         </header>
 
         <div className="content-wrap">

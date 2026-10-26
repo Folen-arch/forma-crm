@@ -89,7 +89,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #8cb98c; outline-
 .icon-button { height: 32px; width: 32px; }
 .notification-button { color: #6f786f; position: relative; }
 .notification-button i { background: #e2936e; border: 2px solid white; border-radius: 50%; height: 7px; position: absolute; right: 7px; top: 6px; width: 7px; }
-.top-avatar { cursor: pointer; flex-basis: 30px; height: 30px; width: 30px; }
+.top-avatar { flex-basis: 30px; height: 30px; width: 30px; }
 .content-wrap { margin: 0 auto; max-width: 1450px; padding: 34px 42px 19px; }
 .page-heading { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 25px; }
 .date-kicker { align-items: center; color: #899187; display: flex; font-size: 9px; font-weight: 700; gap: 7px; letter-spacing: .8px; margin-bottom: 10px; }

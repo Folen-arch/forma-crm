@@ -223,6 +223,7 @@ function CreateModal({
   kind,
   record,
   projects,
+  clients,
   onClose,
   onSave,
   onDelete,
@@ -230,6 +231,7 @@ function CreateModal({
   kind: "клиента" | "проект" | "задачу" | "счёт";
   record?: EditorRecord;
   projects: Project[];
+  clients: Client[];
   onClose: () => void;
   onSave: (values: { name: string; company: string; email: string; phone: string; budget: number; dueDate: string; dueTime: string; status: string }) => Promise<void>;
   onDelete?: () => Promise<void>;
@@ -290,7 +292,7 @@ function CreateModal({
           <label className="form-label" htmlFor="record-name">{kind === "клиента" ? "Имя клиента" : kind === "проект" ? "Название проекта" : kind === "задачу" ? "Название задачи" : "Номер счёта"}</label>
           <input id="record-name" autoFocus required={kind !== "счёт"} value={name} onChange={(event) => setName(event.target.value)} placeholder={kind === "клиента" ? "Например, Анна Коваль" : kind === "проект" ? "Например, Редизайн сайта" : kind === "задачу" ? "Например, Подготовить презентацию" : "Оставьте пустым для автонумерации"} />
           <label className="form-label" htmlFor="record-company">{kind === "клиента" ? "Компания" : kind === "проект" ? "Клиент" : "Проект"}<span>необязательно</span></label>
-          {kind === "задачу" || kind === "счёт" ? <select id="record-company" value={company} onChange={(event) => setCompany(event.target.value)}><option value="">Без проекта</option>{projects.map((project) => <option key={project.id ?? project.name} value={project.name}>{project.name}</option>)}</select> : <input id="record-company" value={company} onChange={(event) => setCompany(event.target.value)} placeholder={kind === "клиента" ? "Название компании" : "Имя клиента"} />}
+          {kind === "задачу" || kind === "счёт" ? <select id="record-company" value={company} onChange={(event) => setCompany(event.target.value)}><option value="">Без проекта</option>{projects.map((project) => <option key={project.id ?? project.name} value={project.name}>{project.name}</option>)}</select> : kind === "проект" ? <select id="record-company" value={company} onChange={(event) => setCompany(event.target.value)}><option value="">Без клиента</option>{clients.map((client) => <option key={client.id ?? `${client.name}-${client.company}`} value={client.name}>{client.name}{client.company ? ` · ${client.company}` : ""}</option>)}</select> : <input id="record-company" value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Название компании" />}
           {kind === "клиента" ? <>
             <label className="form-label" htmlFor="record-email">Электронная почта<span>необязательно</span></label>
             <input id="record-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="anna@example.com" />
@@ -866,7 +868,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
         </div>
       </section>
 
-      {modal && <CreateModal key={`${modal.kind}-${modal.record?.id ?? modal.record?.name ?? "new"}`} kind={modal.kind} record={modal.record} projects={projects} onClose={() => setModal(null)} onSave={saveRecord} onDelete={modal.record ? deleteRecord : undefined} />}
+      {modal && <CreateModal key={`${modal.kind}-${modal.record?.id ?? modal.record?.name ?? "new"}`} kind={modal.kind} record={modal.record} projects={projects} clients={clients} onClose={() => setModal(null)} onSave={saveRecord} onDelete={modal.record ? deleteRecord : undefined} />}
       {toast && <div className="toast-message" role="status"><span><Check size={14} /></span>{toast}</div>}
     </main>
   );

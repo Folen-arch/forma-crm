@@ -27,6 +27,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #8cb98c; outline-
 .brand-name { color: #f3f4f0; font-size: 19px; font-weight: 700; letter-spacing: -.8px; }
 .brand-name span { color: #9cc492; }
 .workspace-switch { align-items: center; background: #2a302b; border: 1px solid #353d36; border-radius: 9px; color: #f4f5f1; display: flex; gap: 10px; margin-bottom: 31px; padding: 9px 9px; text-align: left; width: 100%; }
+.workspace-menu-wrap { margin-bottom: 31px; position: relative; }
+.workspace-menu-wrap .workspace-switch { margin-bottom: 0; }
+.workspace-menu { background: #2a302b; border: 1px solid #424b42; border-radius: 9px; box-shadow: 0 8px 24px #1118; left: 0; padding: 6px; position: absolute; right: 0; top: calc(100% + 7px); z-index: 10; }
+.workspace-menu-current { align-items: center; border-radius: 6px; color: #b9d9ad; display: flex; gap: 9px; padding: 8px; }
+.workspace-menu-current span { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.workspace-menu-current b { color: #eff2ed; font-size: 11px; }
+.workspace-menu-current small { color: #9da69b; font-size: 10px; }
+.workspace-menu p { border-top: 1px solid #414941; color: #9da69b; font-size: 10px; line-height: 1.5; margin: 4px 0 0; padding: 9px 8px 5px; }
 .workspace-avatar { align-items: center; background: #e9eee5; border-radius: 7px; color: #3c6141; display: flex; flex: 0 0 32px; font-size: 14px; font-weight: 700; height: 32px; justify-content: center; }
 .workspace-copy { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
 .workspace-copy b { font-size: 12px; font-weight: 600; }

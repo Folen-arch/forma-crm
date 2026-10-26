@@ -427,6 +427,7 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
 
@@ -747,7 +748,10 @@ export default function Home({ user, workspaceName }: { user: { name: string; em
     <main className="app-shell">
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand-row"><div className="brand-mark"><span /><span /><span /></div><span className="brand-name">forma<span>.</span></span><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Закрыть меню"><X size={18} /></button></div>
-        <button className="workspace-switch"><span className="workspace-avatar">{workspaceName[0]?.toUpperCase() ?? "F"}</span><span className="workspace-copy"><b>{workspaceName}</b><small>Рабочее пространство</small></span><ChevronDown size={15} /></button>
+        <div className="workspace-menu-wrap">
+          <button type="button" className="workspace-switch" aria-haspopup="menu" aria-expanded={workspaceMenuOpen} onClick={() => setWorkspaceMenuOpen((open) => !open)}><span className="workspace-avatar">{workspaceName[0]?.toUpperCase() ?? "F"}</span><span className="workspace-copy"><b>{workspaceName}</b><small>Рабочее пространство</small></span><ChevronDown size={15} /></button>
+          {workspaceMenuOpen && <div className="workspace-menu" role="menu" aria-label="Рабочие пространства"><div className="workspace-menu-current" role="menuitemradio" aria-checked="true"><Check size={15} /><span><b>{workspaceName}</b><small>Текущее пространство</small></span></div><p>Других рабочих пространств пока нет.</p></div>}
+        </div>
 
         <div className="nav-caption">РАБОЧЕЕ</div>
         <nav className="main-nav" aria-label="Основная навигация">

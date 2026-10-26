@@ -62,14 +62,3 @@
    ```
 
 Откройте [http://localhost:3000](http://localhost:3000).
-
-## Работа со схемой
-
-После изменений в `src/db/schema.ts` сгенерируйте миграцию и примените её:
-
-```powershell
-pnpm db:generate
-pnpm db:migrate
-```
-
-`pnpm db:studio` открывает Drizzle Studio для просмотра содержимого базы.
